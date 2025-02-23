@@ -1,4 +1,4 @@
-import { useState, useRef } from "react";
+import { useState, useRef, useEffect } from "react";
 
 interface PhotoEditorProps {
   photos: Array<{ id: string; dataUrl: string }>;
@@ -32,7 +32,7 @@ const templates: Template[] = [
   {
     id: "modern-grid",
     name: "Modern Grid",
-    className: "grid grid-cols-1 gap-4",
+    className: "grid grid-cols-1 gap-4 p-8",
     preview: "⊞",
     borderStyle: "p-3 bg-white rounded-xl shadow-xl",
   },
@@ -61,7 +61,7 @@ const templates: Template[] = [
   {
     id: "magazine-cover",
     name: "Magazine Cover",
-    className: "grid grid-cols-1",
+    className: "grid grid-cols-1 p-8",
     preview: "📖",
     borderStyle: "p-4 bg-gradient-to-b from-pink-500 to-purple-600",
     overlayStyle:
@@ -326,15 +326,85 @@ export default function PhotoEditor({
   onSave,
   onReset,
 }: PhotoEditorProps) {
-  const [selectedTemplate, setSelectedTemplate] = useState<Template>(
-    templates[0]
-  );
+  const [selectedTemplate, setSelectedTemplate] = useState<Template>(templates[0]);
   const [selectedBg, setSelectedBg] = useState<string>("bg-white");
-  const [selectedStickers, setSelectedStickers] = useState<
-    Array<{ id: string; sticker: string; position: { x: number; y: number } }>
-  >([]);
+  const [selectedStickers, setSelectedStickers] = useState<Array<{ id: string; sticker: string; position: { x: number; y: number } }>>([]);
   const [customText, setCustomText] = useState<Record<string, string>>({});
+  const [isDrawing, setIsDrawing] = useState<boolean>(false);
+  const [drawingColor, setDrawingColor] = useState<string>("#000000");
+  const [brushSize, setBrushSize] = useState<number>(5);
+  const [isDoodleMode, setIsDoodleMode] = useState<boolean>(false);
   const templateRef = useRef<HTMLDivElement>(null);
+  const canvasRef = useRef<HTMLCanvasElement>(null);
+  const contextRef = useRef<CanvasRenderingContext2D | null>(null);
+
+  useEffect(() => {
+    if (canvasRef.current) {
+      const canvas = canvasRef.current;
+      const context = canvas.getContext('2d');
+      if (context) {
+        context.lineCap = 'round';
+        context.strokeStyle = drawingColor;
+        context.lineWidth = brushSize;
+        contextRef.current = context;
+      }
+    }
+  }, [drawingColor, brushSize]);
+
+  const startDrawing = (e: React.MouseEvent) => {
+    if (!isDoodleMode || !contextRef.current || !canvasRef.current) return;
+    const rect = canvasRef.current.getBoundingClientRect();
+    const scaleX = canvasRef.current.width / rect.width;
+    const scaleY = canvasRef.current.height / rect.height;
+    const x = (e.clientX - rect.left) * scaleX;
+    const y = (e.clientY - rect.top) * scaleY;
+    contextRef.current.beginPath();
+    contextRef.current.moveTo(x, y);
+    setIsDrawing(true);
+  };
+
+  const draw = (e: React.MouseEvent) => {
+    if (!isDrawing || !isDoodleMode || !contextRef.current || !canvasRef.current) return;
+    const rect = canvasRef.current.getBoundingClientRect();
+    const scaleX = canvasRef.current.width / rect.width;
+    const scaleY = canvasRef.current.height / rect.height;
+    const x = (e.clientX - rect.left) * scaleX;
+    const y = (e.clientY - rect.top) * scaleY;
+    contextRef.current.lineTo(x, y);
+    contextRef.current.stroke();
+  };
+
+  const stopDrawing = () => {
+    if (!contextRef.current) return;
+    contextRef.current.closePath();
+    setIsDrawing(false);
+  };
+
+  const clearCanvas = () => {
+    if (!contextRef.current || !canvasRef.current) return;
+    contextRef.current.clearRect(0, 0, canvasRef.current.width, canvasRef.current.height);
+  };
+
+  useEffect(() => {
+    if (canvasRef.current && templateRef.current) {
+      const template = templateRef.current;
+      const { width, height } = template.getBoundingClientRect();
+      const scale = window.devicePixelRatio;
+      canvasRef.current.width = width * scale;
+      canvasRef.current.height = height * scale;
+      canvasRef.current.style.width = `${width}px`;
+      canvasRef.current.style.height = `${height}px`;
+      
+      const context = canvasRef.current.getContext('2d');
+      if (context) {
+        context.scale(scale, scale);
+        context.lineCap = 'round';
+        context.strokeStyle = drawingColor;
+        context.lineWidth = brushSize;
+        contextRef.current = context;
+      }
+    }
+  }, [drawingColor, brushSize, selectedTemplate]);
 
   const addSticker = (sticker: string) => {
     setSelectedStickers((prev) => [
@@ -520,6 +590,53 @@ export default function PhotoEditor({
             </div>
           </div>
 
+          <div>
+            <h3 className="text-gray-800 font-semibold mb-6 text-xl">
+              Drawing Tools
+            </h3>
+            <div className="space-y-4">
+              <div className="flex items-center justify-between">
+                <label className="text-gray-700 font-medium">Doodle Mode</label>
+                <button
+                  onClick={() => setIsDoodleMode(!isDoodleMode)}
+                  className={`px-4 py-2 rounded-lg font-medium transition-all ${isDoodleMode ? 'bg-blue-500 text-white' : 'bg-gray-200 text-gray-700'}`}
+                >
+                  {isDoodleMode ? 'On' : 'Off'}
+                </button>
+              </div>
+              
+              <div className="space-y-2">
+                <label className="text-gray-700 font-medium block">Brush Color</label>
+                <input
+                  type="color"
+                  value={drawingColor}
+                  onChange={(e) => setDrawingColor(e.target.value)}
+                  className="w-full h-10 rounded-lg cursor-pointer"
+                />
+              </div>
+
+              <div className="space-y-2">
+                <label className="text-gray-700 font-medium block">Brush Size</label>
+                <input
+                  type="range"
+                  min="1"
+                  max="20"
+                  value={brushSize}
+                  onChange={(e) => setBrushSize(parseInt(e.target.value))}
+                  className="w-full"
+                />
+              </div>
+
+              <button
+                onClick={clearCanvas}
+                className="w-full py-2 bg-red-500 text-white rounded-lg font-medium hover:bg-red-600 transition-colors"
+                disabled={!isDoodleMode}
+              >
+                Clear Drawing
+              </button>
+            </div>
+          </div>
+          
           <button
             onClick={downloadPhotoStrip}
             className="w-full bg-gradient-to-r from-emerald-400 to-teal-500 text-white px-8 py-4
@@ -545,17 +662,20 @@ export default function PhotoEditor({
           onDrop={handleDrop}
           ref={templateRef}
           data-template
-          style={{
-            minHeight: "600px",
-            transform: "none",
-          }}
         >
+          <canvas
+            ref={canvasRef}
+            className="absolute inset-0 w-full h-full z-10 cursor-crosshair"
+            style={{ display: isDoodleMode ? 'block' : 'none' }}
+            onMouseDown={startDrawing}
+            onMouseMove={draw}
+            onMouseUp={stopDrawing}
+            onMouseLeave={stopDrawing}
+          />
           {photos.map((photo, index) => (
             <div
               key={photo.id}
-              className={`relative overflow-hidden ${
-                selectedTemplate.borderStyle || ""
-              }`}
+              className={`relative overflow-hidden ${selectedTemplate.borderStyle || ""}`}
             >
               <img
                 src={photo.dataUrl}
