@@ -121,9 +121,9 @@ export default function CameraPreview({ onTakePicture, maxPhotos, countdownTime 
   };
 
   return (
-    <div className="flex flex-col lg:flex-row gap-8 w-full max-w-7xl mx-auto bg-white/95 backdrop-blur-lg rounded-3xl p-8 shadow-2xl border border-gray-200/20">
-      <div className="flex-1 space-y-8">
-        <div className="relative w-full aspect-video bg-gradient-to-br from-gray-50 to-gray-100 rounded-2xl overflow-hidden ring-1 ring-gray-200/50 shadow-xl transform transition-transform hover:scale-[1.01] duration-500">
+    <div className="flex flex-col lg:flex-row gap-4 sm:gap-6 lg:gap-8 w-full max-w-7xl mx-auto bg-white/95 backdrop-blur-lg rounded-3xl p-4 sm:p-6 lg:p-8 shadow-2xl border border-gray-200/20">
+      <div className="flex-1 space-y-4 sm:space-y-6 lg:space-y-8">
+        <div className="relative w-full aspect-video bg-gradient-to-br from-gray-50 to-gray-100 rounded-xl sm:rounded-2xl overflow-hidden ring-1 ring-gray-200/50 shadow-xl transform transition-transform hover:scale-[1.01] duration-500">
           <video
             ref={videoRef}
             autoPlay
@@ -133,17 +133,17 @@ export default function CameraPreview({ onTakePicture, maxPhotos, countdownTime 
           {countdown !== null && (
             <div className="absolute inset-0 flex items-center justify-center bg-black/10 backdrop-blur-[1px] transition-all duration-300">
               <div className="relative">
-                <span className="absolute inset-0 flex items-center justify-center text-white text-[12rem] font-bold blur-2xl opacity-10">
+                <span className="absolute inset-0 flex items-center justify-center text-white text-6xl sm:text-8xl lg:text-[12rem] font-bold blur-2xl opacity-10">
                   {countdown}
                 </span>
-                <span className="relative text-white text-[12rem] font-bold drop-shadow-lg">
+                <span className="relative text-white text-6xl sm:text-8xl lg:text-[12rem] font-bold drop-shadow-lg">
                   {countdown}
                 </span>
               </div>
             </div>
           )}
-          <div className="absolute bottom-0 left-0 right-0 p-6 bg-gradient-to-t from-black/60 to-transparent backdrop-blur-[2px]">
-            <p className="text-white/95 text-lg font-medium">
+          <div className="absolute bottom-0 left-0 right-0 p-4 sm:p-6 bg-gradient-to-t from-black/60 to-transparent backdrop-blur-[2px]">
+            <p className="text-white/95 text-base sm:text-lg font-medium">
               {photos.length >= maxPhotos ? '✨ All photos captured!' : 
                isCapturing ? `📸 Photo ${photos.length + 1} of ${maxPhotos}` : 
                '🎬 Ready to capture memories'}
@@ -153,7 +153,7 @@ export default function CameraPreview({ onTakePicture, maxPhotos, countdownTime 
         <div className="flex justify-center">
           <button
             onClick={handleStartCountdown}
-            className="bg-gradient-to-r from-emerald-400 to-teal-500 text-white px-12 py-5 rounded-2xl text-xl font-semibold
+            className="w-full sm:w-auto bg-gradient-to-r from-emerald-400 to-teal-500 text-white px-6 sm:px-12 py-4 sm:py-5 rounded-xl sm:rounded-2xl text-lg sm:text-xl font-semibold
               hover:from-emerald-500 hover:to-teal-600 transition-all transform hover:scale-105 hover:shadow-xl
               disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none
               shadow-lg relative overflow-hidden group"
@@ -170,9 +170,9 @@ export default function CameraPreview({ onTakePicture, maxPhotos, countdownTime 
       </div>
       
       {/* Photo strip side panel */}
-      <div className="w-full lg:w-80 bg-gradient-to-b from-gray-50 to-gray-100 rounded-2xl p-6 space-y-6 lg:max-h-[85vh] shadow-lg border border-gray-200/50 transform transition-transform hover:scale-[1.01] duration-500">
+      <div className="w-full lg:w-80 bg-gradient-to-b from-gray-50 to-gray-100 rounded-xl sm:rounded-2xl p-4 sm:p-6 space-y-4 sm:space-y-6 lg:max-h-[85vh] shadow-lg border border-gray-200/50 transform transition-transform hover:scale-[1.01] duration-500">
         <div className="text-center">
-          <h2 className="text-2xl font-bold text-gray-800">Captured Photos</h2>
+          <h2 className="text-xl sm:text-2xl font-bold text-gray-800">Captured Photos</h2>
           <div className="mt-2 flex items-center justify-center gap-2">
             {[...Array(maxPhotos)].map((_, index) => (
               <div
@@ -182,7 +182,7 @@ export default function CameraPreview({ onTakePicture, maxPhotos, countdownTime 
             ))}
           </div>
         </div>
-        <div className="space-y-4 overflow-y-auto">
+        <div className="space-y-3 sm:space-y-4 overflow-y-auto">
           {photos.map(photo => (
             <div key={photo.id} className="group relative transform transition-all duration-500 hover:scale-[1.02]">
               <div className="absolute inset-0 bg-gradient-to-r from-emerald-500/20 to-teal-500/20 rounded-xl opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
