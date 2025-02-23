@@ -49,16 +49,12 @@ function App() {
             home
           </a>
           <a
-            href="/about"
+            href="https://shopcrescent.uk"
             className="text-gray-700 hover:text-gray-900 transition-colors duration-300 text-sm font-light tracking-wide"
+            target="_blank"
+            rel="noopener noreferrer"
           >
-            about
-          </a>
-          <a
-            href="/privacy-policy"
-            className="text-gray-700 hover:text-gray-900 transition-colors duration-300 text-sm font-light tracking-wide"
-          >
-            privacy policy
+            shop
           </a>
         </div>
       </nav>

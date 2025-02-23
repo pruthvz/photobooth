@@ -1,5 +1,10 @@
 import { useEffect, useRef, useState } from 'react'
 
+interface CapturedPhoto {
+  id: string;
+  dataUrl: string;
+}
+
 interface CameraPreviewProps {
   onTakePicture: (photos: Array<{ id: string; dataUrl: string }>) => void
   maxPhotos: number
