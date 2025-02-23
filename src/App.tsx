@@ -4,39 +4,32 @@ import PhotoEditor from "./components/PhotoEditor";
 
 function App() {
   const [cameraPermission, setCameraPermission] = useState<boolean>(false);
-  const [showInstructions, setShowInstructions] = useState<boolean>(true);
   const [capturedPhotos, setCapturedPhotos] = useState<
     Array<{ id: string; dataUrl: string }>
   >([]);
   const [showEditor, setShowEditor] = useState<boolean>(false);
-  const [isGlowVisible, setIsGlowVisible] = useState<boolean>(true);
-
+  const [isGlowVisible] = useState<boolean>(true);
   const requestCameraPermission = async () => {
     try {
       const stream = await navigator.mediaDevices.getUserMedia({ video: true });
       setCameraPermission(true);
-      setShowInstructions(false);
       stream.getTracks().forEach((track) => track.stop());
     } catch (error) {
       console.error("Error accessing camera:", error);
     }
   };
-
   const handlePhotoCapture = (
     photos: Array<{ id: string; dataUrl: string }>
   ) => {
     setCapturedPhotos(photos);
   };
-
   const handleSavePhotos = () => {
     console.log("Saving photos...");
   };
-
   const handleResetPhotos = () => {
     setCapturedPhotos([]);
     setShowEditor(false);
   };
-
   return (
     <div className="min-h-screen flex flex-col bg-[#f8f8f8] relative overflow-hidden">
       <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[600px] bg-gradient-to-r from-pink-200 via-pink-300 to-purple-300 rounded-full blur-3xl opacity-50 animate-pulse"></div>
@@ -58,7 +51,6 @@ function App() {
           </a>
         </div>
       </nav>
-
       <main className="flex-1 flex items-center justify-center p-4 relative z-10">
         <div className="text-center">
           {!cameraPermission ? (
@@ -104,7 +96,6 @@ function App() {
           )}
         </div>
       </main>
-
       <footer className="py-6 text-center text-sm text-gray-400">
         <p className="font-light tracking-wide">
           made by{" "}

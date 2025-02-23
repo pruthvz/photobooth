@@ -268,85 +268,20 @@ const backgroundColors = [
   },
 ];
 
-const stickers = [
-  // Hearts
-  "❤️",
-  "💙",
-  "💚",
-  "💛",
-  "🧡",
-  "💜",
-  "🤎",
-  "🖤",
-  "🤍",
-  "💝",
-  // Sparkles and Stars
-  "✨",
-  "⭐",
-  "💫",
-  "🌟",
-  "⚡",
-  "🌠",
-  "🎇",
-  "🎆",
-  "💥",
-  "🔥",
-  // Flowers
-  "🌸",
-  "🌺",
-  "🌹",
-  "🌷",
-  "🌻",
-  "🌼",
-  "🌿",
-  "🍀",
-  "🌱",
-  "🌵",
-  // Decorative
-  "🦋",
-  "🎀",
-  "🌈",
-  "🎨",
-  "💖",
-  "💕",
-  "🎵",
-  "🎶",
-  "🎭",
-  "🎪",
-  // Additional
-  "🌙",
-  "🦄",
-  "🎬",
-  "🎸",
-  "🍃",
-];
-
 export default function PhotoEditor({
   photos,
-  onSave,
   onReset,
 }: PhotoEditorProps) {
   const [selectedTemplate, setSelectedTemplate] = useState<Template>(
     templates[0]
   );
   const [selectedBg, setSelectedBg] = useState<string>("bg-white");
-  const [selectedStickers, setSelectedStickers] = useState<
-    Array<{ id: string; sticker: string; position: { x: number; y: number } }>
-  >([]);
-  const [customText, setCustomText] = useState<Record<string, string>>({});
   const [isDrawing, setIsDrawing] = useState<boolean>(false);
   const [drawingColor, setDrawingColor] = useState<string>("#000000");
   const [brushSize, setBrushSize] = useState<number>(5);
   const [isDoodleMode, setIsDoodleMode] = useState<boolean>(false);
-  const [brushType, setBrushType] = useState<string>("regular");
+  const [brushType] = useState<string>("regular");
 
-  const brushTypes = [
-    { id: "regular", name: "Regular Pen", icon: "✏️" },
-    { id: "marker", name: "Marker", icon: "🖍️" },
-    { id: "neon", name: "Neon", icon: "💫" },
-    { id: "highlighter", name: "Highlighter", icon: "🌈" },
-    { id: "spray", name: "Spray", icon: "💨" },
-  ];
   const templateRef = useRef<HTMLDivElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const contextRef = useRef<CanvasRenderingContext2D | null>(null);
@@ -401,7 +336,7 @@ export default function PhotoEditor({
     }
   }, [drawingColor, brushSize, brushType]);
 
-  const startDrawing = (e: React.MouseEvent) => {
+  const startDrawing = (e: React.MouseEvent<HTMLCanvasElement>) => {
     if (!isDoodleMode || !contextRef.current || !canvasRef.current) return;
     const rect = canvasRef.current.getBoundingClientRect();
     const scaleX = canvasRef.current.width / rect.width;
@@ -413,14 +348,8 @@ export default function PhotoEditor({
     setIsDrawing(true);
   };
 
-  const draw = (e: React.MouseEvent) => {
-    if (
-      !isDrawing ||
-      !isDoodleMode ||
-      !contextRef.current ||
-      !canvasRef.current
-    )
-      return;
+  const draw = (e: React.MouseEvent<HTMLCanvasElement>) => {
+    if (!isDrawing || !isDoodleMode || !contextRef.current || !canvasRef.current) return;
     const rect = canvasRef.current.getBoundingClientRect();
     const scaleX = canvasRef.current.width / rect.width;
     const scaleY = canvasRef.current.height / rect.height;
@@ -445,6 +374,49 @@ export default function PhotoEditor({
       canvasRef.current.height
     );
   };
+
+  useEffect(() => {
+    const handleMouseMove = (e: MouseEvent) => {
+      const mouseEvent = {
+        clientX: e.clientX,
+        clientY: e.clientY,
+        preventDefault: () => {},
+        stopPropagation: () => {},
+        nativeEvent: e,
+        isDefaultPrevented: () => false,
+        isPropagationStopped: () => false,
+        persist: () => {},
+        target: e.target,
+        currentTarget: e.currentTarget,
+        bubbles: true,
+        cancelable: true,
+        defaultPrevented: false,
+        eventPhase: 0,
+        isTrusted: true,
+        timeStamp: e.timeStamp,
+        type: 'mousemove'
+      } as React.MouseEvent<HTMLCanvasElement>;
+      if (isDrawing) {
+        draw(mouseEvent);
+      }
+    };
+
+    const handleMouseUp = () => {
+      if (isDrawing) {
+        stopDrawing();
+      }
+    };
+
+    if (isDoodleMode) {
+      window.addEventListener('mousemove', handleMouseMove);
+      window.addEventListener('mouseup', handleMouseUp);
+    }
+
+    return () => {
+      window.removeEventListener('mousemove', handleMouseMove);
+      window.removeEventListener('mouseup', handleMouseUp);
+    };
+  }, [isDrawing, isDoodleMode]);
 
   useEffect(() => {
     if (canvasRef.current && templateRef.current) {
@@ -494,54 +466,6 @@ export default function PhotoEditor({
     }
   }, [drawingColor, brushSize, selectedTemplate]);
 
-  const addSticker = (sticker: string) => {
-    setSelectedStickers((prev) => [
-      ...prev,
-      {
-        id: Date.now().toString(),
-        sticker,
-        position: { x: 50, y: 50 },
-      },
-    ]);
-  };
-
-  const handleDragStart = (e: React.DragEvent, stickerId: string) => {
-    e.dataTransfer.setData("text/plain", stickerId);
-    e.currentTarget.style.opacity = "0.5";
-  };
-
-  const handleDragEnd = (e: React.DragEvent) => {
-    e.currentTarget.style.opacity = "1";
-  };
-
-  const handleDragOver = (e: React.DragEvent) => {
-    e.preventDefault();
-    e.currentTarget.style.cursor = "move";
-  };
-
-  const handleDrop = (e: React.DragEvent) => {
-    e.preventDefault();
-    const stickerId = e.dataTransfer.getData("text/plain");
-    const templateRect = templateRef.current?.getBoundingClientRect();
-
-    if (templateRect) {
-      const x = ((e.clientX - templateRect.left) / templateRect.width) * 100;
-      const y = ((e.clientY - templateRect.top) / templateRect.height) * 100;
-
-      // Ensure the sticker stays within the template boundaries
-      const clampedX = Math.max(0, Math.min(100, x));
-      const clampedY = Math.max(0, Math.min(100, y));
-
-      setSelectedStickers((prev) =>
-        prev.map((s) =>
-          s.id === stickerId
-            ? { ...s, position: { x: clampedX, y: clampedY } }
-            : s
-        )
-      );
-    }
-  };
-
   const downloadPhotoStrip = async () => {
     if (!templateRef.current) return;
 
@@ -569,13 +493,12 @@ export default function PhotoEditor({
       logging: false,
       imageTimeout: 0,
       onclone: (clonedDoc) => {
-        const clonedTemplate = clonedDoc.querySelector("[data-template]");
+        const clonedTemplate = clonedDoc.querySelector<HTMLElement>("[data-template]");
         if (clonedTemplate) {
           clonedTemplate.style.transform = "none";
         }
       },
     });
-
     // Draw the captured content onto our canvas
     context.drawImage(capturedCanvas, 0, 0);
 
@@ -602,7 +525,6 @@ export default function PhotoEditor({
       1.0
     );
   };
-
   return (
     <div className="min-h-[calc(100vh-8rem)] flex items-center justify-center p-4 bg-[#f8f8f8] relative overflow-x-hidden mt-10">
       <div className="fixed inset-0 pointer-events-none">
@@ -614,8 +536,6 @@ export default function PhotoEditor({
           <div
             className={`w-full ${selectedBg} transition-all duration-300 relative overflow-hidden ${selectedTemplate.className}`}
             style={{ maxWidth: "250px", margin: "0 auto" }}
-            onDragOver={handleDragOver}
-            onDrop={handleDrop}
             ref={templateRef}
             data-template
           >
@@ -628,29 +548,53 @@ export default function PhotoEditor({
               onMouseUp={stopDrawing}
               onMouseLeave={stopDrawing}
               onTouchStart={(e) => {
-                const touch = e.touches[0];
-                const mouseEvent = new MouseEvent("mousedown", {
-                  clientX: touch.clientX,
-                  clientY: touch.clientY,
-                });
-                startDrawing(mouseEvent);
-              }}
-              onTouchMove={(e) => {
-                const touch = e.touches[0];
-                const mouseEvent = new MouseEvent("mousemove", {
-                  clientX: touch.clientX,
-                  clientY: touch.clientY,
-                });
-                draw(mouseEvent);
-              }}
-              onTouchEnd={() => stopDrawing()}
+                  const touch = e.touches[0];
+                  const mouseEvent = new MouseEvent('mousedown', {
+                    clientX: touch.clientX,
+                    clientY: touch.clientY,
+                    bubbles: true,
+                    cancelable: true,
+                    view: window,
+                    detail: 1,
+                    screenX: touch.screenX,
+                    screenY: touch.screenY,
+                    ctrlKey: false,
+                    altKey: false,
+                    shiftKey: false,
+                    metaKey: false,
+                    button: 0,
+                    buttons: 1,
+                    relatedTarget: null,
+                  }) as unknown as React.MouseEvent<HTMLCanvasElement>;
+                  startDrawing(mouseEvent);
+                }}
+                onTouchMove={(e) => {
+                  const touch = e.touches[0];
+                  const mouseEvent = new MouseEvent('mousemove', {
+                    clientX: touch.clientX,
+                    clientY: touch.clientY,
+                    bubbles: true,
+                    cancelable: true,
+                    view: window,
+                    detail: 1,
+                    screenX: touch.screenX,
+                    screenY: touch.screenY,
+                    ctrlKey: false,
+                    altKey: false,
+                    shiftKey: false,
+                    metaKey: false,
+                    button: 0,
+                    buttons: 1,
+                    relatedTarget: null,
+                  }) as unknown as React.MouseEvent<HTMLCanvasElement>;
+                  draw(mouseEvent);
+                }}
+                onTouchEnd={() => stopDrawing()}
             />
             {photos.map((photo, index) => (
               <div
                 key={photo.id}
-                className={`relative overflow-hidden mb-3 ${
-                  selectedTemplate.borderStyle || ""
-                }`}
+                className={`relative overflow-hidden mb-3 ${selectedTemplate.borderStyle || ""}`}
                 style={{ aspectRatio: "4/3" }}
               >
                 <img
@@ -666,27 +610,7 @@ export default function PhotoEditor({
 
             {selectedTemplate.defaultText?.map((textItem) => (
               <div key={textItem.id} className={textItem.style}>
-                {customText[textItem.id] || textItem.text}
-              </div>
-            ))}
-
-            {selectedStickers.map((sticker) => (
-              <div
-                key={sticker.id}
-                draggable
-                onDragStart={(e) => handleDragStart(e, sticker.id)}
-                onDragEnd={handleDragEnd}
-                style={{
-                  position: "absolute",
-                  left: `${sticker.position.x}%`,
-                  top: `${sticker.position.y}%`,
-                  cursor: "move",
-                  fontSize: "2rem",
-                  transform: "translate(-50%, -50%)",
-                  zIndex: 20,
-                }}
-              >
-                {sticker.sticker}
+                {textItem.text}
               </div>
             ))}
           </div>
@@ -708,11 +632,7 @@ export default function PhotoEditor({
                       key={template.id}
                       onClick={() => setSelectedTemplate(template)}
                       className={`p-2 transition-all rounded-md
-                        ${
-                          selectedTemplate.id === template.id
-                            ? "bg-gray-100"
-                            : "hover:bg-gray-50"
-                        }`}
+                        ${selectedTemplate.id === template.id ? "bg-gray-100" : "hover:bg-gray-50"}`}
                     >
                       <span className="text-xl">{template.preview}</span>
                     </button>
@@ -731,9 +651,7 @@ export default function PhotoEditor({
                       key={id}
                       onClick={() => setSelectedBg(color)}
                       className={`group relative h-8 w-8 rounded-md transition-all transform
-                        ${color} ${
-                        selectedBg === color ? "ring-2 ring-gray-400" : ""
-                      }`}
+                        ${color} ${selectedBg === color ? "ring-2 ring-gray-400" : ""}`}
                       title={label}
                     />
                   ))}
@@ -750,11 +668,7 @@ export default function PhotoEditor({
                     <label className="text-gray-600 text-sm">Doodle Mode</label>
                     <button
                       onClick={() => setIsDoodleMode(!isDoodleMode)}
-                      className={`px-3 py-1.5 text-sm rounded-md transition-all ${
-                        isDoodleMode
-                          ? "bg-blue-500 text-white"
-                          : "bg-gray-100 text-gray-600"
-                      }`}
+                      className={`px-3 py-1.5 text-sm rounded-md transition-all ${isDoodleMode ? "bg-blue-500 text-white" : "bg-gray-100 text-gray-600"}`}
                     >
                       {isDoodleMode ? "On" : "Off"}
                     </button>
@@ -787,27 +701,6 @@ export default function PhotoEditor({
 
             {/* Right Column */}
             <div className="space-y-6">
-              {/* Stickers */}
-              <div>
-                <h3 className="text-gray-600 font-medium mb-3 text-sm uppercase tracking-wide">
-                  stickers
-                </h3>
-                <div className="grid grid-cols-5 gap-1.5">
-                  {stickers.slice(0, 30).map((sticker) => (
-                    <button
-                      key={sticker}
-                      onClick={() => addSticker(sticker)}
-                      className="w-8 h-8 flex items-center justify-center hover:bg-gray-50 transition-all text-lg rounded-md"
-                      draggable
-                      onDragStart={(e) => handleDragStart(e, sticker)}
-                      onDragEnd={handleDragEnd}
-                    >
-                      {sticker}
-                    </button>
-                  ))}
-                </div>
-              </div>
-
               {/* Clear Drawing Button */}
               {isDoodleMode && (
                 <button
@@ -821,16 +714,16 @@ export default function PhotoEditor({
               {/* Action Buttons */}
               <div className="flex gap-2 mt-auto pt-4">
                 <button
-                  onClick={downloadPhotoStrip}
-                  className="flex-1 py-2 bg-gray-900 text-white hover:bg-gray-800 transition-all text-sm rounded-md"
+                  onClick={onReset}
+                  className="flex-1 py-2 text-gray-600 text-sm hover:bg-gray-50 transition-colors rounded-md"
                 >
-                  Download
+                  Reset
                 </button>
                 <button
-                  onClick={onReset}
-                  className="flex-1 py-2 bg-gray-100 text-gray-900 hover:bg-gray-200 transition-all text-sm rounded-md"
+                  onClick={downloadPhotoStrip}
+                  className="flex-1 py-2 bg-blue-500 text-white text-sm hover:bg-blue-600 transition-colors rounded-md"
                 >
-                  Retake
+                  Download
                 </button>
               </div>
             </div>
