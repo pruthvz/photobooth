@@ -25,9 +25,9 @@ const templates: Template[] = [
   {
     id: "classic-strip",
     name: "Classic Strip",
-    className: "grid grid-cols-1 gap-3 p-5",
+    className: "grid grid-cols-1 gap-2 p-2",
     preview: "🖼️",
-    borderStyle: "p-2 bg-gray-50 shadow-sm",
+    borderStyle: "bg-white shadow-sm",
   },
   {
     id: "modern-grid",
@@ -326,9 +326,13 @@ export default function PhotoEditor({
   onSave,
   onReset,
 }: PhotoEditorProps) {
-  const [selectedTemplate, setSelectedTemplate] = useState<Template>(templates[0]);
+  const [selectedTemplate, setSelectedTemplate] = useState<Template>(
+    templates[0]
+  );
   const [selectedBg, setSelectedBg] = useState<string>("bg-white");
-  const [selectedStickers, setSelectedStickers] = useState<Array<{ id: string; sticker: string; position: { x: number; y: number } }>>([]);
+  const [selectedStickers, setSelectedStickers] = useState<
+    Array<{ id: string; sticker: string; position: { x: number; y: number } }>
+  >([]);
   const [customText, setCustomText] = useState<Record<string, string>>({});
   const [isDrawing, setIsDrawing] = useState<boolean>(false);
   const [drawingColor, setDrawingColor] = useState<string>("#000000");
@@ -341,7 +345,7 @@ export default function PhotoEditor({
     { id: "marker", name: "Marker", icon: "🖍️" },
     { id: "neon", name: "Neon", icon: "💫" },
     { id: "highlighter", name: "Highlighter", icon: "🌈" },
-    { id: "spray", name: "Spray", icon: "💨" }
+    { id: "spray", name: "Spray", icon: "💨" },
   ];
   const templateRef = useRef<HTMLDivElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
@@ -350,48 +354,48 @@ export default function PhotoEditor({
   useEffect(() => {
     if (canvasRef.current) {
       const canvas = canvasRef.current;
-      const context = canvas.getContext('2d');
+      const context = canvas.getContext("2d");
       if (context) {
-        context.lineCap = 'round';
+        context.lineCap = "round";
         context.strokeStyle = drawingColor;
         context.lineWidth = brushSize;
-        context.globalCompositeOperation = 'source-over';
+        context.globalCompositeOperation = "source-over";
         context.shadowBlur = 0;
         context.globalAlpha = 1;
-        
+
         // Apply brush effects based on type
         switch (brushType) {
-          case 'marker':
+          case "marker":
             context.globalAlpha = 0.4;
-            context.lineJoin = 'round';
+            context.lineJoin = "round";
             context.lineWidth = brushSize * 1.5;
-            context.globalCompositeOperation = 'multiply';
+            context.globalCompositeOperation = "multiply";
             break;
-          case 'neon':
+          case "neon":
             context.shadowBlur = 20;
             context.shadowColor = drawingColor;
             context.globalAlpha = 0.8;
             context.lineWidth = brushSize * 0.8;
-            context.globalCompositeOperation = 'screen';
+            context.globalCompositeOperation = "screen";
             break;
-          case 'highlighter':
+          case "highlighter":
             context.globalAlpha = 0.2;
             context.lineWidth = brushSize * 3;
-            context.globalCompositeOperation = 'overlay';
+            context.globalCompositeOperation = "overlay";
             break;
-          case 'spray':
+          case "spray":
             context.globalAlpha = 0.2;
             context.lineWidth = brushSize * 0.5;
-            context.globalCompositeOperation = 'source-over';
+            context.globalCompositeOperation = "source-over";
             break;
           default: // regular pen
             context.globalAlpha = 1;
             context.shadowBlur = 0;
             context.lineWidth = brushSize;
-            context.globalCompositeOperation = 'source-over';
+            context.globalCompositeOperation = "source-over";
             break;
         }
-        
+
         contextRef.current = context;
       }
     }
@@ -410,7 +414,13 @@ export default function PhotoEditor({
   };
 
   const draw = (e: React.MouseEvent) => {
-    if (!isDrawing || !isDoodleMode || !contextRef.current || !canvasRef.current) return;
+    if (
+      !isDrawing ||
+      !isDoodleMode ||
+      !contextRef.current ||
+      !canvasRef.current
+    )
+      return;
     const rect = canvasRef.current.getBoundingClientRect();
     const scaleX = canvasRef.current.width / rect.width;
     const scaleY = canvasRef.current.height / rect.height;
@@ -428,7 +438,12 @@ export default function PhotoEditor({
 
   const clearCanvas = () => {
     if (!contextRef.current || !canvasRef.current) return;
-    contextRef.current.clearRect(0, 0, canvasRef.current.width, canvasRef.current.height);
+    contextRef.current.clearRect(
+      0,
+      0,
+      canvasRef.current.width,
+      canvasRef.current.height
+    );
   };
 
   useEffect(() => {
@@ -440,40 +455,40 @@ export default function PhotoEditor({
       canvasRef.current.height = height * scale;
       canvasRef.current.style.width = `${width}px`;
       canvasRef.current.style.height = `${height}px`;
-      
-      const context = canvasRef.current.getContext('2d');
+
+      const context = canvasRef.current.getContext("2d");
       if (context) {
         context.scale(scale, scale);
-        context.lineCap = 'round';
+        context.lineCap = "round";
         context.strokeStyle = drawingColor;
         context.lineWidth = brushSize;
-        
+
         // Apply brush effects based on type
         switch (brushType) {
-          case 'marker':
+          case "marker":
             context.globalAlpha = 0.6;
-            context.lineJoin = 'round';
+            context.lineJoin = "round";
             break;
-          case 'neon':
+          case "neon":
             context.shadowBlur = 15;
             context.shadowColor = drawingColor;
             context.globalAlpha = 0.8;
             break;
-          case 'highlighter':
+          case "highlighter":
             context.globalAlpha = 0.3;
             context.lineWidth = brushSize * 2;
             break;
-          case 'spray':
+          case "spray":
             context.globalAlpha = 0.3;
-            context.lineJoin = 'round';
-            context.lineCap = 'butt';
+            context.lineJoin = "round";
+            context.lineCap = "butt";
             break;
           default: // regular pen
             context.globalAlpha = 1;
             context.shadowBlur = 0;
             break;
         }
-        
+
         contextRef.current = context;
       }
     }
@@ -589,262 +604,237 @@ export default function PhotoEditor({
   };
 
   return (
-    <div className="w-full max-w-6xl mx-auto p-4 sm:p-6 lg:p-8 bg-white/95 backdrop-blur-lg rounded-3xl shadow-2xl">
-      <div className="flex flex-col lg:flex-row gap-6 lg:gap-10">
-        {/* Editor Panel */}
-        <div className="w-full lg:w-96 bg-gradient-to-b from-gray-50 to-gray-100 rounded-2xl p-4 sm:p-6 lg:p-8 space-y-6 lg:space-y-8 shadow-lg border border-gray-200/50">
-          <div>
-            <h3 className="text-gray-800 font-semibold mb-4 sm:mb-6 text-lg sm:text-xl">
-              Choose Template
-            </h3>
-            <div className="grid grid-cols-2 gap-3 sm:gap-4">
-              {templates.map((template) => (
-                <button
-                  key={template.id}
-                  onClick={() => setSelectedTemplate(template)}
-                  className={`flex flex-col items-center p-3 sm:p-5 rounded-xl transition-all transform hover:scale-105
-                    ${selectedTemplate.id === template.id
-                      ? "bg-gradient-to-br from-blue-50 to-indigo-100 ring-2 ring-blue-200 shadow-lg"
-                      : "bg-white hover:bg-gray-50 shadow-md"
-                    }`}
-                >
-                  <span className="text-3xl sm:text-4xl mb-2 sm:mb-3">{template.preview}</span>
-                  <span className="text-gray-700 text-xs sm:text-sm font-medium text-center">
-                    {template.name}
-                  </span>
-                </button>
-              ))}
-            </div>
-          </div>
-
-          <div>
-            <h3 className="text-gray-800 font-semibold mb-4 sm:mb-6 text-lg sm:text-xl">
-              Background Style
-            </h3>
-            <div className="grid grid-cols-3 gap-2 sm:gap-3">
-              {backgroundColors.map(({ id, color, label }) => (
-                <button
-                  key={id}
-                  onClick={() => setSelectedBg(color)}
-                  className={`group relative h-16 sm:h-20 rounded-xl transition-all transform hover:scale-105
-                    ${color} ${selectedBg === color
-                      ? "ring-2 ring-blue-300 shadow-lg"
-                      : "shadow-md"
-                    }`}
-                >
-                  <span className="absolute inset-0 flex items-center justify-center text-xs sm:text-sm font-medium
-                    text-white opacity-0 group-hover:opacity-100 transition-opacity bg-black/30 rounded-xl backdrop-blur-sm p-1 text-center">
-                    {label}
-                  </span>
-                </button>
-              ))}
-            </div>
-          </div>
-
-          <div>
-            <h3 className="text-gray-800 font-semibold mb-4 sm:mb-6 text-lg sm:text-xl">
-              Add Stickers
-            </h3>
-            <div className="grid grid-cols-6 sm:grid-cols-5 gap-2 sm:gap-3">
-              {stickers.map((sticker) => (
-                <button
-                  key={sticker}
-                  onClick={() => addSticker(sticker)}
-                  className="w-10 h-10 sm:w-12 sm:h-12 flex items-center justify-center bg-white rounded-xl
-                    hover:bg-gray-50 transition-all transform hover:scale-110 text-xl sm:text-2xl shadow-md"
-                >
-                  {sticker}
-                </button>
-              ))}
-            </div>
-          </div>
-
-          <div>
-            <h3 className="text-gray-800 font-semibold mb-4 sm:mb-6 text-lg sm:text-xl">
-              Drawing Tools
-            </h3>
-            <div className="space-y-4">
-              <div className="flex items-center justify-between">
-                <label className="text-gray-700 font-medium text-sm sm:text-base">Doodle Mode</label>
-                <button
-                  onClick={() => setIsDoodleMode(!isDoodleMode)}
-                  className={`px-3 sm:px-4 py-2 rounded-lg font-medium transition-all text-sm sm:text-base ${isDoodleMode ? 'bg-blue-500 text-white' : 'bg-gray-200 text-gray-700'}`}
-                >
-                  {isDoodleMode ? 'On' : 'Off'}
-                </button>
-              </div>
-              
-              <div className="space-y-2">
-                <label className="text-gray-700 font-medium block text-sm sm:text-base">Brush Color</label>
-                <input
-                  type="color"
-                  value={drawingColor}
-                  onChange={(e) => setDrawingColor(e.target.value)}
-                  className="w-full h-8 sm:h-10 rounded-lg cursor-pointer"
-                />
-              </div>
-
-              <div className="space-y-4">
-                <div>
-                  <label className="text-gray-700 font-medium block text-sm sm:text-base mb-2">Brush Style</label>
-                  <div className="grid grid-cols-5 gap-2">
-                    {brushTypes.map((brush) => (
-                      <button
-                        key={brush.id}
-                        onClick={() => setBrushType(brush.id)}
-                        className={`p-2 rounded-lg flex flex-col items-center justify-center transition-all ${brushType === brush.id ? 'bg-blue-100 ring-2 ring-blue-300' : 'bg-white hover:bg-gray-50'}`}
-                        title={brush.name}
-                      >
-                        <span className="text-xl">{brush.icon}</span>
-                      </button>
-                    ))}
-                  </div>
-                </div>
-
-                <div className="space-y-2">
-                  <label className="text-gray-700 font-medium block text-sm sm:text-base">Brush Size</label>
-                  <input
-                    type="range"
-                    min="1"
-                    max="20"
-                    value={brushSize}
-                    onChange={(e) => setBrushSize(parseInt(e.target.value))}
-                    className="w-full"
-                  />
-                </div>
-              </div>
-
-              <button
-                onClick={clearCanvas}
-                className="w-full py-2 bg-red-500 text-white rounded-lg font-medium hover:bg-red-600 transition-colors text-sm sm:text-base"
-                disabled={!isDoodleMode}
-              >
-                Clear Drawing
-              </button>
-            </div>
-          </div>
-          
-          <button
-            onClick={downloadPhotoStrip}
-            className="w-full bg-gradient-to-r from-emerald-400 to-teal-500 text-white px-6 sm:px-8 py-3 sm:py-4
-              rounded-xl hover:from-emerald-500 hover:to-teal-600 transition-all transform hover:scale-[1.02]
-              font-semibold shadow-lg mb-3 sm:mb-4 text-base sm:text-lg"
+    <div className="min-h-[calc(100vh-8rem)] flex items-center justify-center p-4 bg-[#f8f8f8] relative overflow-x-hidden mt-10">
+      <div className="fixed inset-0 pointer-events-none">
+        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[1200px] h-[800px] bg-gradient-to-r from-pink-200 via-pink-300 to-purple-300 rounded-[50%] blur-[64px] opacity-70"></div>
+      </div>
+      <div className="w-full max-w-[1400px] mx-auto flex gap-8 relative z-10">
+        {/* Preview Area - Made more compact */}
+        <div className="flex-1 max-w-[400px]">
+          <div
+            className={`w-full ${selectedBg} transition-all duration-300 relative overflow-hidden ${selectedTemplate.className}`}
+            style={{ maxWidth: "250px", margin: "0 auto" }}
+            onDragOver={handleDragOver}
+            onDrop={handleDrop}
+            ref={templateRef}
+            data-template
           >
-            Download Photo Strip
-          </button>
-          <button
-            onClick={onReset}
-            className="w-full bg-gradient-to-r from-violet-400 to-purple-500 text-white px-6 sm:px-8 py-3 sm:py-4
-              rounded-xl hover:from-violet-500 hover:to-purple-600 transition-all transform hover:scale-[1.02]
-              font-semibold shadow-lg text-base sm:text-lg"
-          >
-            Take New Photos
-          </button>
-        </div>
-
-        {/* Preview Area */}
-        <div
-          className={`flex-1 rounded-2xl p-4 sm:p-6 lg:p-10 ${selectedBg} transition-all duration-300 shadow-2xl min-h-[60vh] sm:min-h-[70vh] lg:min-h-[800px] relative overflow-hidden ${selectedTemplate.className} border border-gray-200/20 backdrop-blur-sm`}
-          onDragOver={handleDragOver}
-          onDrop={handleDrop}
-          ref={templateRef}
-          data-template
-        >
-          <canvas
-            ref={canvasRef}
-            className="absolute inset-0 w-full h-full z-10 cursor-crosshair"
-            style={{ display: isDoodleMode ? 'block' : 'none' }}
-            onMouseDown={startDrawing}
-            onMouseMove={draw}
-            onMouseUp={stopDrawing}
-            onMouseLeave={stopDrawing}
-            onTouchStart={(e) => {
-              const touch = e.touches[0];
-              const mouseEvent = new MouseEvent('mousedown', {
-                clientX: touch.clientX,
-                clientY: touch.clientY
-              });
-              startDrawing(mouseEvent);
-            }}
-            onTouchMove={(e) => {
-              const touch = e.touches[0];
-              const mouseEvent = new MouseEvent('mousemove', {
-                clientX: touch.clientX,
-                clientY: touch.clientY
-              });
-              draw(mouseEvent);
-            }}
-            onTouchEnd={() => stopDrawing()}
-          />
-          {photos.map((photo, index) => (
-            <div
-              key={photo.id}
-              className={`relative overflow-hidden ${selectedTemplate.borderStyle || ""}`}
-            >
-              <img
-                src={photo.dataUrl}
-                alt={`Photo ${index + 1}`}
-                className="w-full h-full object-cover"
-              />
-              {selectedTemplate.overlayStyle && (
-                <div className={selectedTemplate.overlayStyle} />
-              )}
-            </div>
-          ))}
-
-          {selectedTemplate.defaultText?.map((textItem) => (
-            <div key={textItem.id} className={textItem.style}>
-              {customText[textItem.id] || textItem.text}
-            </div>
-          ))}
-
-          {selectedStickers.map((sticker) => (
-            <div
-              key={sticker.id}
-              draggable
-              onDragStart={(e) => handleDragStart(e, sticker.id)}
-              onDragEnd={handleDragEnd}
+            <canvas
+              ref={canvasRef}
+              className="absolute inset-0 w-full h-full z-10 cursor-crosshair"
+              style={{ display: isDoodleMode ? "block" : "none" }}
+              onMouseDown={startDrawing}
+              onMouseMove={draw}
+              onMouseUp={stopDrawing}
+              onMouseLeave={stopDrawing}
               onTouchStart={(e) => {
                 const touch = e.touches[0];
-                const dragEvent = new DragEvent('dragstart', {
+                const mouseEvent = new MouseEvent("mousedown", {
                   clientX: touch.clientX,
-                  clientY: touch.clientY
+                  clientY: touch.clientY,
                 });
-                handleDragStart(dragEvent, sticker.id);
+                startDrawing(mouseEvent);
               }}
               onTouchMove={(e) => {
-                e.preventDefault();
                 const touch = e.touches[0];
-                const templateRect = templateRef.current?.getBoundingClientRect();
-                if (templateRect) {
-                  const x = ((touch.clientX - templateRect.left) / templateRect.width) * 100;
-                  const y = ((touch.clientY - templateRect.top) / templateRect.height) * 100;
-                  const clampedX = Math.max(0, Math.min(100, x));
-                  const clampedY = Math.max(0, Math.min(100, y));
-                  setSelectedStickers((prev) =>
-                    prev.map((s) =>
-                      s.id === sticker.id
-                        ? { ...s, position: { x: clampedX, y: clampedY } }
-                        : s
-                    )
-                  );
-                }
+                const mouseEvent = new MouseEvent("mousemove", {
+                  clientX: touch.clientX,
+                  clientY: touch.clientY,
+                });
+                draw(mouseEvent);
               }}
-              onTouchEnd={handleDragEnd}
-              style={{
-                position: "absolute",
-                left: `${sticker.position.x}%`,
-                top: `${sticker.position.y}%`,
-                transform: "translate(-50%, -50%)",
-                fontSize: "2rem",
-                cursor: "move",
-                userSelect: "none",
-                touchAction: "none"
-              }}
-            >
-              {sticker.sticker}
+              onTouchEnd={() => stopDrawing()}
+            />
+            {photos.map((photo, index) => (
+              <div
+                key={photo.id}
+                className={`relative overflow-hidden mb-3 ${
+                  selectedTemplate.borderStyle || ""
+                }`}
+                style={{ aspectRatio: "4/3" }}
+              >
+                <img
+                  src={photo.dataUrl}
+                  alt={`Photo ${index + 1}`}
+                  className="w-full h-full object-cover"
+                />
+                {selectedTemplate.overlayStyle && (
+                  <div className={selectedTemplate.overlayStyle} />
+                )}
+              </div>
+            ))}
+
+            {selectedTemplate.defaultText?.map((textItem) => (
+              <div key={textItem.id} className={textItem.style}>
+                {customText[textItem.id] || textItem.text}
+              </div>
+            ))}
+
+            {selectedStickers.map((sticker) => (
+              <div
+                key={sticker.id}
+                draggable
+                onDragStart={(e) => handleDragStart(e, sticker.id)}
+                onDragEnd={handleDragEnd}
+                style={{
+                  position: "absolute",
+                  left: `${sticker.position.x}%`,
+                  top: `${sticker.position.y}%`,
+                  cursor: "move",
+                  fontSize: "2rem",
+                  transform: "translate(-50%, -50%)",
+                  zIndex: 20,
+                }}
+              >
+                {sticker.sticker}
+              </div>
+            ))}
+          </div>
+        </div>
+
+        {/* Editor Panel - Two-column layout */}
+        <div className="w-[600px] bg-white/80 backdrop-blur-sm rounded-lg shadow-sm p-4">
+          <div className="grid grid-cols-2 gap-6">
+            {/* Left Column */}
+            <div className="space-y-6">
+              {/* Templates */}
+              <div>
+                <h3 className="text-gray-600 font-medium mb-3 text-sm uppercase tracking-wide">
+                  frame
+                </h3>
+                <div className="grid grid-cols-4 gap-2">
+                  {templates.slice(0, 8).map((template) => (
+                    <button
+                      key={template.id}
+                      onClick={() => setSelectedTemplate(template)}
+                      className={`p-2 transition-all rounded-md
+                        ${
+                          selectedTemplate.id === template.id
+                            ? "bg-gray-100"
+                            : "hover:bg-gray-50"
+                        }`}
+                    >
+                      <span className="text-xl">{template.preview}</span>
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              {/* Background Colors */}
+              <div>
+                <h3 className="text-gray-600 font-medium mb-3 text-sm uppercase tracking-wide">
+                  background
+                </h3>
+                <div className="grid grid-cols-5 gap-2">
+                  {backgroundColors.slice(0, 10).map(({ id, color, label }) => (
+                    <button
+                      key={id}
+                      onClick={() => setSelectedBg(color)}
+                      className={`group relative h-8 w-8 rounded-md transition-all transform
+                        ${color} ${
+                        selectedBg === color ? "ring-2 ring-gray-400" : ""
+                      }`}
+                      title={label}
+                    />
+                  ))}
+                </div>
+              </div>
+
+              {/* Drawing Tools */}
+              <div>
+                <h3 className="text-gray-600 font-medium mb-3 text-sm uppercase tracking-wide">
+                  draw
+                </h3>
+                <div className="space-y-3">
+                  <div className="flex items-center justify-between">
+                    <label className="text-gray-600 text-sm">Doodle Mode</label>
+                    <button
+                      onClick={() => setIsDoodleMode(!isDoodleMode)}
+                      className={`px-3 py-1.5 text-sm rounded-md transition-all ${
+                        isDoodleMode
+                          ? "bg-blue-500 text-white"
+                          : "bg-gray-100 text-gray-600"
+                      }`}
+                    >
+                      {isDoodleMode ? "On" : "Off"}
+                    </button>
+                  </div>
+
+                  <div className="space-y-1.5">
+                    <label className="text-gray-600 text-sm block">Color</label>
+                    <input
+                      type="color"
+                      value={drawingColor}
+                      onChange={(e) => setDrawingColor(e.target.value)}
+                      className="w-full h-8 cursor-pointer rounded"
+                    />
+                  </div>
+
+                  <div className="space-y-1.5">
+                    <label className="text-gray-600 text-sm block">Size</label>
+                    <input
+                      type="range"
+                      min="1"
+                      max="20"
+                      value={brushSize}
+                      onChange={(e) => setBrushSize(parseInt(e.target.value))}
+                      className="w-full h-1.5 bg-gray-200 rounded-lg appearance-none cursor-pointer"
+                    />
+                  </div>
+                </div>
+              </div>
             </div>
-          ))}
+
+            {/* Right Column */}
+            <div className="space-y-6">
+              {/* Stickers */}
+              <div>
+                <h3 className="text-gray-600 font-medium mb-3 text-sm uppercase tracking-wide">
+                  stickers
+                </h3>
+                <div className="grid grid-cols-5 gap-1.5">
+                  {stickers.slice(0, 30).map((sticker) => (
+                    <button
+                      key={sticker}
+                      onClick={() => addSticker(sticker)}
+                      className="w-8 h-8 flex items-center justify-center hover:bg-gray-50 transition-all text-lg rounded-md"
+                      draggable
+                      onDragStart={(e) => handleDragStart(e, sticker)}
+                      onDragEnd={handleDragEnd}
+                    >
+                      {sticker}
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              {/* Clear Drawing Button */}
+              {isDoodleMode && (
+                <button
+                  onClick={clearCanvas}
+                  className="w-full py-1.5 text-red-600 text-sm hover:bg-red-50 transition-colors rounded-md"
+                >
+                  Clear Drawing
+                </button>
+              )}
+
+              {/* Action Buttons */}
+              <div className="flex gap-2 mt-auto pt-4">
+                <button
+                  onClick={downloadPhotoStrip}
+                  className="flex-1 py-2 bg-gray-900 text-white hover:bg-gray-800 transition-all text-sm rounded-md"
+                >
+                  Download
+                </button>
+                <button
+                  onClick={onReset}
+                  className="flex-1 py-2 bg-gray-100 text-gray-900 hover:bg-gray-200 transition-all text-sm rounded-md"
+                >
+                  Retake
+                </button>
+              </div>
+            </div>
+          </div>
         </div>
       </div>
     </div>

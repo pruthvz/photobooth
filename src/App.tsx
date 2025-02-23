@@ -9,13 +9,13 @@ function App() {
     Array<{ id: string; dataUrl: string }>
   >([]);
   const [showEditor, setShowEditor] = useState<boolean>(false);
+  const [isGlowVisible, setIsGlowVisible] = useState<boolean>(true);
 
   const requestCameraPermission = async () => {
     try {
       const stream = await navigator.mediaDevices.getUserMedia({ video: true });
       setCameraPermission(true);
       setShowInstructions(false);
-      // Clean up the stream since we don't need it yet
       stream.getTracks().forEach((track) => track.stop());
     } catch (error) {
       console.error("Error accessing camera:", error);
@@ -26,16 +26,9 @@ function App() {
     photos: Array<{ id: string; dataUrl: string }>
   ) => {
     setCapturedPhotos(photos);
-    if (photos.length === 4) {
-      // Add a 2.5 second delay before showing the editor
-      setTimeout(() => {
-        setShowEditor(true);
-      }, 2500);
-    }
   };
 
   const handleSavePhotos = () => {
-    // Here you can implement the save functionality
     console.log("Saving photos...");
   };
 
@@ -45,74 +38,59 @@ function App() {
   };
 
   return (
-    <div className="min-h-screen flex flex-col bg-gradient-to-br from-pink-50 via-rose-50 to-purple-100">
-      <nav className="sticky top-0 z-50 bg-white/90 backdrop-blur-sm shadow-sm px-4 sm:px-6 py-3 sm:py-4">
-        <div className="max-w-6xl mx-auto flex items-center">
+    <div className="min-h-screen flex flex-col bg-[#f8f8f8] relative overflow-hidden">
+      <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[600px] bg-gradient-to-r from-pink-200 via-pink-300 to-purple-300 rounded-full blur-3xl opacity-50 animate-pulse"></div>
+      <nav className="fixed top-0 w-full z-50 py-4 bg-transparent backdrop-blur-sm">
+        <div className="max-w-6xl mx-auto flex justify-center gap-8">
           <a
             href="/"
-            className="text-gray-800 hover:text-emerald-500 transition-colors duration-300 text-base sm:text-lg font-medium flex items-center gap-2"
+            className="text-gray-700 hover:text-gray-900 transition-colors duration-300 text-sm font-light tracking-wide"
           >
-            <span className="text-xl sm:text-2xl">📸</span>
-            <span>Photobooth</span>
+            home
+          </a>
+          <a
+            href="/about"
+            className="text-gray-700 hover:text-gray-900 transition-colors duration-300 text-sm font-light tracking-wide"
+          >
+            about
+          </a>
+          <a
+            href="/privacy-policy"
+            className="text-gray-700 hover:text-gray-900 transition-colors duration-300 text-sm font-light tracking-wide"
+          >
+            privacy policy
           </a>
         </div>
       </nav>
-      <div className="flex-1 flex items-center justify-center">
-        <div className="text-center w-full max-w-6xl px-4 py-8 sm:py-12">
+
+      <main className="flex-1 flex items-center justify-center p-4 relative z-10">
+        <div className="text-center">
           {!cameraPermission ? (
-            <div className="space-y-6 sm:space-y-8">
-              <div className="mb-8 sm:mb-12">
-                <div className="text-4xl sm:text-6xl mb-4 sm:mb-6 animate-bounce">
-                  📸
-                </div>
-                <h1 className="text-3xl sm:text-5xl font-bold text-gray-800 mb-3 sm:mb-4">
-                  Photobooth App
-                </h1>
-                <p className="text-lg sm:text-xl text-gray-600">
-                  Create memorable photo strips with our modern photobooth
-                  experience
-                </p>
-              </div>
-
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-4 sm:gap-6 max-w-4xl mx-auto mb-8 sm:mb-12">
-                <div className="bg-white/80 backdrop-blur p-4 sm:p-6 rounded-xl sm:rounded-2xl border border-gray-100 shadow-lg hover:shadow-xl transition-all duration-300 transform hover:scale-[1.02]">
-                  <div className="text-2xl sm:text-3xl mb-3 sm:mb-4">⏱️</div>
-                  <h3 className="text-lg sm:text-xl font-semibold text-gray-800 mb-2">
-                    Quick Shots
-                  </h3>
-                  <p className="text-sm sm:text-base text-gray-600">
-                    3 seconds for each shot – no retakes!
+            <div className="space-y-6">
+              <div className="mb-8">
+                <div className="flex flex-col items-center justify-center">
+                  <h1 className="text-5xl font-light mb-4 tracking-wide relative text-gray-900">
+                    <span className="mx-3 relative inline-block">
+                      photobooth app
+                      {isGlowVisible && (
+                        <span className="absolute inset-0 blur-lg bg-gradient-to-r from-pink-200 via-pink-300 to-purple-300 opacity-70 -z-10"></span>
+                      )}
+                    </span>
+                  </h1>
+                  <p className="text-gray-500 text-sm mb-6 font-light tracking-wider">
+                    Create beautiful memories with a click,
+                    <br />
+                    share moments that last forever
                   </p>
-                </div>
-
-                <div className="bg-white/80 backdrop-blur p-4 sm:p-6 rounded-xl sm:rounded-2xl border border-gray-100 shadow-lg hover:shadow-xl transition-all duration-300 transform hover:scale-[1.02]">
-                  <div className="text-2xl sm:text-3xl mb-3 sm:mb-4">🎬</div>
-                  <h3 className="text-lg sm:text-xl font-semibold text-gray-800 mb-2">
-                    4-Shot Series
-                  </h3>
-                  <p className="text-sm sm:text-base text-gray-600">
-                    Strike your best poses in sequence
-                  </p>
-                </div>
-
-                <div className="bg-white/80 backdrop-blur p-4 sm:p-6 rounded-xl sm:rounded-2xl border border-gray-100 shadow-lg hover:shadow-xl transition-all duration-300 transform hover:scale-[1.02]">
-                  <div className="text-2xl sm:text-3xl mb-3 sm:mb-4">💫</div>
-                  <h3 className="text-lg sm:text-xl font-semibold text-gray-800 mb-2">
-                    Instant Edit
-                  </h3>
-                  <p className="text-sm sm:text-base text-gray-600">
-                    Customize and share your photos
-                  </p>
+                  <button
+                    onClick={requestCameraPermission}
+                    className="mt-4 px-8 py-2.5 bg-white text-black border-2 border-gray-200 rounded-full
+                      hover:bg-gray-50 hover:border-pink-300 hover:text-pink-500 transition-all duration-300 text-sm tracking-wide font-light"
+                  >
+                    START
+                  </button>
                 </div>
               </div>
-
-              <button
-                onClick={requestCameraPermission}
-                className="w-full sm:w-auto bg-gradient-to-r from-emerald-400 to-teal-500 text-white px-6 sm:px-8 py-3 sm:py-4 rounded-xl text-lg sm:text-xl font-semibold hover:from-emerald-500 hover:to-teal-600 transition-all transform hover:scale-105 shadow-lg group relative overflow-hidden"
-              >
-                <span className="absolute inset-0 bg-gradient-to-r from-white/20 to-transparent transform scale-x-0 group-hover:scale-x-100 transition-transform origin-left"></span>
-                <span className="relative">Get Started</span>
-              </button>
             </div>
           ) : showEditor ? (
             <PhotoEditor
@@ -125,30 +103,22 @@ function App() {
               onTakePicture={handlePhotoCapture}
               maxPhotos={4}
               countdownTime={3}
+              setShowEditor={setShowEditor}
             />
           )}
         </div>
-      </div>
-      <footer className="mt-auto py-6 sm:py-8 bg-white/90 backdrop-blur-sm shadow-sm px-4 sm:px-6">
-        <div className="max-w-6xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-4 sm:gap-6">
-          <p className="text-gray-600 text-sm sm:text-base">
-            © {new Date().getFullYear()} Photobooth App.
-          </p>
-          <div className="flex items-center gap-2 sm:gap-4">
-            <p className="text-gray-600 text-sm sm:text-base">
-              Created with ❤️ by Pruthvi
-            </p>
-            <span className="text-gray-400">|</span>
-            <a
-              href="https://shopcrescent.com"
-              target="_blank"
-              rel="noopener noreferrer"
-              className="text-gray-600 hover:text-emerald-500 transition-colors duration-300 text-sm sm:text-base"
-            >
-              shopcrescent
-            </a>
-          </div>
-        </div>
+      </main>
+
+      <footer className="py-6 text-center text-sm text-gray-400">
+        <p className="font-light tracking-wide">
+          made by{" "}
+          <a
+            href="#"
+            className="text-pink-400 hover:text-pink-500 transition-colors duration-300"
+          >
+            pruthvi
+          </a>
+        </p>
       </footer>
     </div>
   );

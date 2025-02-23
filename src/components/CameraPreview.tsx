@@ -4,14 +4,10 @@ interface CameraPreviewProps {
   onTakePicture: (photos: Array<{ id: string; dataUrl: string }>) => void
   maxPhotos: number
   countdownTime: number
+  setShowEditor: (show: boolean) => void
 }
 
-interface CapturedPhoto {
-  id: string
-  dataUrl: string
-}
-
-export default function CameraPreview({ onTakePicture, maxPhotos, countdownTime }: CameraPreviewProps) {
+export default function CameraPreview({ onTakePicture, maxPhotos, countdownTime, setShowEditor }: CameraPreviewProps) {
   const videoRef = useRef<HTMLVideoElement>(null)
   const canvasRef = useRef<HTMLCanvasElement>(null)
   const [countdown, setCountdown] = useState<number | null>(null)
@@ -121,86 +117,95 @@ export default function CameraPreview({ onTakePicture, maxPhotos, countdownTime 
   };
 
   return (
-    <div className="flex flex-col lg:flex-row gap-4 sm:gap-6 lg:gap-8 w-full max-w-7xl mx-auto bg-white/95 backdrop-blur-lg rounded-3xl p-4 sm:p-6 lg:p-8 shadow-2xl border border-gray-200/20">
-      <div className="flex-1 space-y-4 sm:space-y-6 lg:space-y-8">
-        <div className="relative w-full aspect-video bg-gradient-to-br from-gray-50 to-gray-100 rounded-xl sm:rounded-2xl overflow-hidden ring-1 ring-gray-200/50 shadow-xl transform transition-transform hover:scale-[1.01] duration-500">
-          <video
-            ref={videoRef}
-            autoPlay
-            playsInline
-            className="w-full h-full object-cover"
-          />
-          {countdown !== null && (
-            <div className="absolute inset-0 flex items-center justify-center bg-black/10 backdrop-blur-[1px] transition-all duration-300">
-              <div className="relative">
-                <span className="absolute inset-0 flex items-center justify-center text-white text-6xl sm:text-8xl lg:text-[12rem] font-bold blur-2xl opacity-10">
-                  {countdown}
-                </span>
-                <span className="relative text-white text-6xl sm:text-8xl lg:text-[12rem] font-bold drop-shadow-lg">
-                  {countdown}
-                </span>
+    <div className="min-h-screen flex items-center justify-center p-4 bg-[#f8f8f8] relative overflow-hidden">
+      <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[600px] bg-gradient-to-r from-pink-200 via-pink-300 to-purple-300 rounded-full blur-3xl opacity-50 animate-pulse"></div>
+      <div className="w-full max-w-6xl mx-auto flex gap-8 relative z-10">
+        {/* Camera Preview */}
+        <div className="flex-1">
+          <div className="relative w-full aspect-video bg-white overflow-hidden">
+            <video
+              ref={videoRef}
+              autoPlay
+              playsInline
+              className="w-full h-full object-cover"
+            />
+            {countdown !== null && (
+              <div className="absolute inset-0 flex items-center justify-center bg-black/10 backdrop-blur-[1px]">
+                <span className="text-white text-8xl font-light">{countdown}</span>
               </div>
-            </div>
-          )}
-          <div className="absolute bottom-0 left-0 right-0 p-4 sm:p-6 bg-gradient-to-t from-black/60 to-transparent backdrop-blur-[2px]">
-            <p className="text-white/95 text-base sm:text-lg font-medium">
-              {photos.length >= maxPhotos ? '✨ All photos captured!' : 
-               isCapturing ? `📸 Photo ${photos.length + 1} of ${maxPhotos}` : 
-               '🎬 Ready to capture memories'}
-            </p>
+            )}
+          </div>
+
+          <div className="mt-8 flex justify-center gap-4">
+            {photos.length >= maxPhotos ? (
+              <div className="flex gap-4">
+                <button
+                  onClick={() => {
+                    setPhotos([]);
+                    setCurrentPhotoIndex(0);
+                    setIsCapturing(false);
+                  }}
+                  className="px-12 py-3 bg-gray-100 text-gray-900
+                    hover:bg-gray-200 transition-all duration-300
+                    text-base font-light tracking-wide"
+                >
+                  Retake
+                </button>
+                <button
+                  onClick={() => {
+                    onTakePicture(photos);
+                    setShowEditor(true);
+                  }}
+                  className="px-12 py-3 bg-gray-100 text-gray-900
+                    hover:bg-gray-200 transition-all duration-300
+                    text-base font-light tracking-wide"
+                >
+                  DONE
+                </button>
+              </div>
+            ) : (
+              <button
+                onClick={handleStartCountdown}
+                className="px-12 py-3 bg-gray-100 text-gray-900
+                  hover:bg-gray-200 transition-all duration-300
+                  text-base font-light tracking-wide
+                  disabled:opacity-50 disabled:cursor-not-allowed"
+                disabled={isCapturing || photos.length >= maxPhotos}
+              >
+                {isCapturing ? `Taking Photo ${currentPhotoIndex + 1}` : 'Start Session'}
+              </button>
+            )}
           </div>
         </div>
-        <div className="flex justify-center">
-          <button
-            onClick={handleStartCountdown}
-            className="w-full sm:w-auto bg-gradient-to-r from-emerald-400 to-teal-500 text-white px-6 sm:px-12 py-4 sm:py-5 rounded-xl sm:rounded-2xl text-lg sm:text-xl font-semibold
-              hover:from-emerald-500 hover:to-teal-600 transition-all transform hover:scale-105 hover:shadow-xl
-              disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none
-              shadow-lg relative overflow-hidden group"
-            disabled={isCapturing || photos.length >= maxPhotos}
-          >
-            <span className="absolute inset-0 bg-gradient-to-r from-white/20 to-transparent transform scale-x-0 group-hover:scale-x-100 transition-transform origin-left"></span>
-            <span className="relative">
-              {photos.length >= maxPhotos ? '✨ Photo Session Complete' : 
-               isCapturing ? `📸 Taking Photo ${currentPhotoIndex + 1} of ${maxPhotos}` : 
-               '🎬 Start Photo Session'}
-            </span>
-          </button>
-        </div>
-      </div>
-      
-      {/* Photo strip side panel */}
-      <div className="w-full lg:w-80 bg-gradient-to-b from-gray-50 to-gray-100 rounded-xl sm:rounded-2xl p-4 sm:p-6 space-y-4 sm:space-y-6 lg:max-h-[85vh] shadow-lg border border-gray-200/50 transform transition-transform hover:scale-[1.01] duration-500">
-        <div className="text-center">
-          <h2 className="text-xl sm:text-2xl font-bold text-gray-800">Captured Photos</h2>
-          <div className="mt-2 flex items-center justify-center gap-2">
-            {[...Array(maxPhotos)].map((_, index) => (
-              <div
-                key={index}
-                className={`w-2 h-2 rounded-full transition-all duration-300 ${index < photos.length ? 'bg-emerald-500' : 'bg-gray-300'}`}
-              />
+
+        {/* Photo Strip */}
+        <div className="w-48 p-4">
+          <div className="text-center mb-4">
+            <h2 className="text-xl font-light text-gray-900 mb-2">photobooth</h2>
+            <div className="flex justify-center gap-1">
+              {[...Array(maxPhotos)].map((_, index) => (
+                <div
+                  key={index}
+                  className={`w-1.5 h-1.5 transition-all ${index < photos.length ? 'bg-gray-400' : 'bg-gray-200'}`}
+                />
+              ))}
+            </div>
+          </div>
+
+          <div className="space-y-2">
+            {photos.map(photo => (
+              <div key={photo.id} className="relative aspect-video bg-white overflow-hidden shadow-sm">
+                <img
+                  src={photo.dataUrl}
+                  alt="Captured photo"
+                  className="w-full h-full object-cover"
+                />
+              </div>
             ))}
           </div>
         </div>
-        <div className="space-y-3 sm:space-y-4 overflow-y-auto">
-          {photos.map(photo => (
-            <div key={photo.id} className="group relative transform transition-all duration-500 hover:scale-[1.02]">
-              <div className="absolute inset-0 bg-gradient-to-r from-emerald-500/20 to-teal-500/20 rounded-xl opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
-              <img
-                src={photo.dataUrl}
-                alt="Captured photo"
-                className="w-full rounded-xl shadow-md ring-1 ring-gray-200/50 transform transition-transform duration-300"
-              />
-              <div className="absolute inset-0 bg-gradient-to-t from-black/50 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300 rounded-xl">
-                <div className="absolute bottom-0 left-0 right-0 p-4">
-                  <p className="text-white/95 text-sm font-medium">Photo {photos.indexOf(photo) + 1}</p>
-                </div>
-              </div>
-            </div>
-          ))}
-        </div>
       </div>
-      
+
       {/* Hidden canvas for capturing photos */}
       <canvas ref={canvasRef} className="hidden" />
     </div>
