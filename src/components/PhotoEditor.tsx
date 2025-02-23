@@ -334,6 +334,15 @@ export default function PhotoEditor({
   const [drawingColor, setDrawingColor] = useState<string>("#000000");
   const [brushSize, setBrushSize] = useState<number>(5);
   const [isDoodleMode, setIsDoodleMode] = useState<boolean>(false);
+  const [brushType, setBrushType] = useState<string>("regular");
+
+  const brushTypes = [
+    { id: "regular", name: "Regular Pen", icon: "✏️" },
+    { id: "marker", name: "Marker", icon: "🖍️" },
+    { id: "neon", name: "Neon", icon: "💫" },
+    { id: "highlighter", name: "Highlighter", icon: "🌈" },
+    { id: "spray", name: "Spray", icon: "💨" }
+  ];
   const templateRef = useRef<HTMLDivElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const contextRef = useRef<CanvasRenderingContext2D | null>(null);
@@ -346,10 +355,47 @@ export default function PhotoEditor({
         context.lineCap = 'round';
         context.strokeStyle = drawingColor;
         context.lineWidth = brushSize;
+        context.globalCompositeOperation = 'source-over';
+        context.shadowBlur = 0;
+        context.globalAlpha = 1;
+        
+        // Apply brush effects based on type
+        switch (brushType) {
+          case 'marker':
+            context.globalAlpha = 0.4;
+            context.lineJoin = 'round';
+            context.lineWidth = brushSize * 1.5;
+            context.globalCompositeOperation = 'multiply';
+            break;
+          case 'neon':
+            context.shadowBlur = 20;
+            context.shadowColor = drawingColor;
+            context.globalAlpha = 0.8;
+            context.lineWidth = brushSize * 0.8;
+            context.globalCompositeOperation = 'screen';
+            break;
+          case 'highlighter':
+            context.globalAlpha = 0.2;
+            context.lineWidth = brushSize * 3;
+            context.globalCompositeOperation = 'overlay';
+            break;
+          case 'spray':
+            context.globalAlpha = 0.2;
+            context.lineWidth = brushSize * 0.5;
+            context.globalCompositeOperation = 'source-over';
+            break;
+          default: // regular pen
+            context.globalAlpha = 1;
+            context.shadowBlur = 0;
+            context.lineWidth = brushSize;
+            context.globalCompositeOperation = 'source-over';
+            break;
+        }
+        
         contextRef.current = context;
       }
     }
-  }, [drawingColor, brushSize]);
+  }, [drawingColor, brushSize, brushType]);
 
   const startDrawing = (e: React.MouseEvent) => {
     if (!isDoodleMode || !contextRef.current || !canvasRef.current) return;
@@ -401,6 +447,33 @@ export default function PhotoEditor({
         context.lineCap = 'round';
         context.strokeStyle = drawingColor;
         context.lineWidth = brushSize;
+        
+        // Apply brush effects based on type
+        switch (brushType) {
+          case 'marker':
+            context.globalAlpha = 0.6;
+            context.lineJoin = 'round';
+            break;
+          case 'neon':
+            context.shadowBlur = 15;
+            context.shadowColor = drawingColor;
+            context.globalAlpha = 0.8;
+            break;
+          case 'highlighter':
+            context.globalAlpha = 0.3;
+            context.lineWidth = brushSize * 2;
+            break;
+          case 'spray':
+            context.globalAlpha = 0.3;
+            context.lineJoin = 'round';
+            context.lineCap = 'butt';
+            break;
+          default: // regular pen
+            context.globalAlpha = 1;
+            context.shadowBlur = 0;
+            break;
+        }
+        
         contextRef.current = context;
       }
     }
@@ -611,16 +684,34 @@ export default function PhotoEditor({
                 />
               </div>
 
-              <div className="space-y-2">
-                <label className="text-gray-700 font-medium block text-sm sm:text-base">Brush Size</label>
-                <input
-                  type="range"
-                  min="1"
-                  max="20"
-                  value={brushSize}
-                  onChange={(e) => setBrushSize(parseInt(e.target.value))}
-                  className="w-full"
-                />
+              <div className="space-y-4">
+                <div>
+                  <label className="text-gray-700 font-medium block text-sm sm:text-base mb-2">Brush Style</label>
+                  <div className="grid grid-cols-5 gap-2">
+                    {brushTypes.map((brush) => (
+                      <button
+                        key={brush.id}
+                        onClick={() => setBrushType(brush.id)}
+                        className={`p-2 rounded-lg flex flex-col items-center justify-center transition-all ${brushType === brush.id ? 'bg-blue-100 ring-2 ring-blue-300' : 'bg-white hover:bg-gray-50'}`}
+                        title={brush.name}
+                      >
+                        <span className="text-xl">{brush.icon}</span>
+                      </button>
+                    ))}
+                  </div>
+                </div>
+
+                <div className="space-y-2">
+                  <label className="text-gray-700 font-medium block text-sm sm:text-base">Brush Size</label>
+                  <input
+                    type="range"
+                    min="1"
+                    max="20"
+                    value={brushSize}
+                    onChange={(e) => setBrushSize(parseInt(e.target.value))}
+                    className="w-full"
+                  />
+                </div>
               </div>
 
               <button

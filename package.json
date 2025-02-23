@@ -13,6 +13,7 @@
     "@headlessui/react": "^2.2.0",
     "@types/fabric": "^5.3.9",
     "fabric": "^6.6.1",
+    "gif.js": "^0.2.0",
     "html2canvas": "^1.4.1",
     "react": "^19.0.0",
     "react-dom": "^19.0.0",
