@@ -272,6 +272,7 @@ export default function PhotoEditor({
   photos,
   onReset,
 }: PhotoEditorProps) {
+  const [customText] = useState<Record<string, string>>({});
   const [selectedTemplate, setSelectedTemplate] = useState<Template>(
     templates[0]
   );
@@ -336,7 +337,7 @@ export default function PhotoEditor({
     }
   }, [drawingColor, brushSize, brushType]);
 
-  const startDrawing = (e: React.MouseEvent<Element>) => {
+  const startDrawing = (e: React.MouseEvent<HTMLCanvasElement>) => {
     if (!isDoodleMode || !contextRef.current || !canvasRef.current) return;
     const rect = canvasRef.current.getBoundingClientRect();
     const scaleX = canvasRef.current.width / rect.width;
@@ -348,7 +349,7 @@ export default function PhotoEditor({
     setIsDrawing(true);
   };
 
-  const draw = (e: React.MouseEvent<Element>) => {
+  const draw = (e: React.MouseEvent<HTMLCanvasElement>) => {
     if (
       !isDrawing ||
       !isDoodleMode ||
@@ -429,53 +430,7 @@ export default function PhotoEditor({
     }
   }, [drawingColor, brushSize, selectedTemplate]);
 
-  const addSticker = (sticker: string) => {
-    setSelectedStickers((prev) => [
-      ...prev,
-      {
-        id: Date.now().toString(),
-        sticker,
-        position: { x: 50, y: 50 },
-      },
-    ]);
-  };
 
-  const handleDragStart = (e: React.DragEvent, stickerId: string) => {
-    e.dataTransfer.setData("text/plain", stickerId);
-    e.currentTarget.style.opacity = "0.5";
-  };
-
-  const handleDragEnd = (e: React.DragEvent) => {
-    e.currentTarget.style.opacity = "1";
-  };
-
-  const handleDragOver = (e: React.DragEvent) => {
-    e.preventDefault();
-    e.currentTarget.style.cursor = "move";
-  };
-
-  const handleDrop = (e: React.DragEvent) => {
-    e.preventDefault();
-    const stickerId = e.dataTransfer.getData("text/plain");
-    const templateRect = templateRef.current?.getBoundingClientRect();
-
-    if (templateRect) {
-      const x = ((e.clientX - templateRect.left) / templateRect.width) * 100;
-      const y = ((e.clientY - templateRect.top) / templateRect.height) * 100;
-
-      // Ensure the sticker stays within the template boundaries
-      const clampedX = Math.max(0, Math.min(100, x));
-      const clampedY = Math.max(0, Math.min(100, y));
-
-      setSelectedStickers((prev) =>
-        prev.map((s) =>
-          s.id === stickerId
-            ? { ...s, position: { x: clampedX, y: clampedY } }
-            : s
-        )
-      );
-    }
-  };
 
   const downloadPhotoStrip = async () => {
     if (!templateRef.current) return;
@@ -506,7 +461,7 @@ export default function PhotoEditor({
       onclone: (clonedDoc) => {
         const clonedTemplate = clonedDoc.querySelector("[data-template]");
         if (clonedTemplate) {
-          clonedTemplate.style.transform = "none";
+          (clonedTemplate as HTMLElement).style.transform = "none";
         }
       },
     });
@@ -562,19 +517,51 @@ export default function PhotoEditor({
               onMouseLeave={stopDrawing}
               onTouchStart={(e) => {
                 const touch = e.touches[0];
-                const mouseEvent = new MouseEvent("mousedown", {
+                const rect = canvasRef.current?.getBoundingClientRect();
+                if (!rect) return;
+                
+                const syntheticEvent = {
                   clientX: touch.clientX,
                   clientY: touch.clientY,
-                });
-                startDrawing(mouseEvent);
+                  preventDefault: () => {},
+                  stopPropagation: () => {},
+                  nativeEvent: new MouseEvent("mousedown"),
+                  isDefaultPrevented: () => false,
+                  isPropagationStopped: () => false,
+                  persist: () => {},
+                  target: e.target,
+                  currentTarget: e.currentTarget,
+                  bubbles: true,
+                  cancelable: true,
+                  timeStamp: e.timeStamp,
+                  type: "mousedown",
+                } as React.MouseEvent<HTMLCanvasElement>;
+                
+                startDrawing(syntheticEvent);
               }}
               onTouchMove={(e) => {
                 const touch = e.touches[0];
-                const mouseEvent = new MouseEvent("mousemove", {
+                const rect = canvasRef.current?.getBoundingClientRect();
+                if (!rect) return;
+                
+                const syntheticEvent = {
                   clientX: touch.clientX,
                   clientY: touch.clientY,
-                });
-                draw(mouseEvent);
+                  preventDefault: () => {},
+                  stopPropagation: () => {},
+                  nativeEvent: new MouseEvent("mousemove"),
+                  isDefaultPrevented: () => false,
+                  isPropagationStopped: () => false,
+                  persist: () => {},
+                  target: e.target,
+                  currentTarget: e.currentTarget,
+                  bubbles: true,
+                  cancelable: true,
+                  timeStamp: e.timeStamp,
+                  type: "mousemove",
+                } as React.MouseEvent<HTMLCanvasElement>;
+                
+                draw(syntheticEvent);
               }}
               onTouchEnd={() => stopDrawing()}
             />
