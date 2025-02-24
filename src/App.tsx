@@ -41,14 +41,14 @@ function App() {
           >
             home
           </a>
-          <a
+          {/* <a
             href="https://shopcrescent.uk"
             className="text-gray-700 hover:text-gray-900 transition-colors duration-300 text-sm font-light tracking-wide"
             target="_blank"
             rel="noopener noreferrer"
           >
             shop
-          </a>
+          </a> */}
         </div>
       </nav>
       <main className="flex-1 flex items-center justify-center p-4 relative z-10">

@@ -336,7 +336,7 @@ export default function PhotoEditor({
     }
   }, [drawingColor, brushSize, brushType]);
 
-  const startDrawing = (e: React.MouseEvent<HTMLCanvasElement>) => {
+  const startDrawing = (e: React.MouseEvent<Element>) => {
     if (!isDoodleMode || !contextRef.current || !canvasRef.current) return;
     const rect = canvasRef.current.getBoundingClientRect();
     const scaleX = canvasRef.current.width / rect.width;
@@ -348,8 +348,14 @@ export default function PhotoEditor({
     setIsDrawing(true);
   };
 
-  const draw = (e: React.MouseEvent<HTMLCanvasElement>) => {
-    if (!isDrawing || !isDoodleMode || !contextRef.current || !canvasRef.current) return;
+  const draw = (e: React.MouseEvent<Element>) => {
+    if (
+      !isDrawing ||
+      !isDoodleMode ||
+      !contextRef.current ||
+      !canvasRef.current
+    )
+      return;
     const rect = canvasRef.current.getBoundingClientRect();
     const scaleX = canvasRef.current.width / rect.width;
     const scaleY = canvasRef.current.height / rect.height;
@@ -374,49 +380,6 @@ export default function PhotoEditor({
       canvasRef.current.height
     );
   };
-
-  useEffect(() => {
-    const handleMouseMove = (e: MouseEvent) => {
-      const mouseEvent = {
-        clientX: e.clientX,
-        clientY: e.clientY,
-        preventDefault: () => {},
-        stopPropagation: () => {},
-        nativeEvent: e,
-        isDefaultPrevented: () => false,
-        isPropagationStopped: () => false,
-        persist: () => {},
-        target: e.target,
-        currentTarget: e.currentTarget,
-        bubbles: true,
-        cancelable: true,
-        defaultPrevented: false,
-        eventPhase: 0,
-        isTrusted: true,
-        timeStamp: e.timeStamp,
-        type: 'mousemove'
-      } as React.MouseEvent<HTMLCanvasElement>;
-      if (isDrawing) {
-        draw(mouseEvent);
-      }
-    };
-
-    const handleMouseUp = () => {
-      if (isDrawing) {
-        stopDrawing();
-      }
-    };
-
-    if (isDoodleMode) {
-      window.addEventListener('mousemove', handleMouseMove);
-      window.addEventListener('mouseup', handleMouseUp);
-    }
-
-    return () => {
-      window.removeEventListener('mousemove', handleMouseMove);
-      window.removeEventListener('mouseup', handleMouseUp);
-    };
-  }, [isDrawing, isDoodleMode]);
 
   useEffect(() => {
     if (canvasRef.current && templateRef.current) {
@@ -466,6 +429,54 @@ export default function PhotoEditor({
     }
   }, [drawingColor, brushSize, selectedTemplate]);
 
+  const addSticker = (sticker: string) => {
+    setSelectedStickers((prev) => [
+      ...prev,
+      {
+        id: Date.now().toString(),
+        sticker,
+        position: { x: 50, y: 50 },
+      },
+    ]);
+  };
+
+  const handleDragStart = (e: React.DragEvent, stickerId: string) => {
+    e.dataTransfer.setData("text/plain", stickerId);
+    e.currentTarget.style.opacity = "0.5";
+  };
+
+  const handleDragEnd = (e: React.DragEvent) => {
+    e.currentTarget.style.opacity = "1";
+  };
+
+  const handleDragOver = (e: React.DragEvent) => {
+    e.preventDefault();
+    e.currentTarget.style.cursor = "move";
+  };
+
+  const handleDrop = (e: React.DragEvent) => {
+    e.preventDefault();
+    const stickerId = e.dataTransfer.getData("text/plain");
+    const templateRect = templateRef.current?.getBoundingClientRect();
+
+    if (templateRect) {
+      const x = ((e.clientX - templateRect.left) / templateRect.width) * 100;
+      const y = ((e.clientY - templateRect.top) / templateRect.height) * 100;
+
+      // Ensure the sticker stays within the template boundaries
+      const clampedX = Math.max(0, Math.min(100, x));
+      const clampedY = Math.max(0, Math.min(100, y));
+
+      setSelectedStickers((prev) =>
+        prev.map((s) =>
+          s.id === stickerId
+            ? { ...s, position: { x: clampedX, y: clampedY } }
+            : s
+        )
+      );
+    }
+  };
+
   const downloadPhotoStrip = async () => {
     if (!templateRef.current) return;
 
@@ -493,12 +504,13 @@ export default function PhotoEditor({
       logging: false,
       imageTimeout: 0,
       onclone: (clonedDoc) => {
-        const clonedTemplate = clonedDoc.querySelector<HTMLElement>("[data-template]");
+        const clonedTemplate = clonedDoc.querySelector("[data-template]");
         if (clonedTemplate) {
           clonedTemplate.style.transform = "none";
         }
       },
     });
+
     // Draw the captured content onto our canvas
     context.drawImage(capturedCanvas, 0, 0);
 
@@ -525,6 +537,7 @@ export default function PhotoEditor({
       1.0
     );
   };
+
   return (
     <div className="min-h-[calc(100vh-8rem)] flex items-center justify-center p-4 bg-[#f8f8f8] relative overflow-x-hidden mt-10">
       <div className="fixed inset-0 pointer-events-none">
@@ -548,48 +561,22 @@ export default function PhotoEditor({
               onMouseUp={stopDrawing}
               onMouseLeave={stopDrawing}
               onTouchStart={(e) => {
-                  const touch = e.touches[0];
-                  const mouseEvent = new MouseEvent('mousedown', {
-                    clientX: touch.clientX,
-                    clientY: touch.clientY,
-                    bubbles: true,
-                    cancelable: true,
-                    view: window,
-                    detail: 1,
-                    screenX: touch.screenX,
-                    screenY: touch.screenY,
-                    ctrlKey: false,
-                    altKey: false,
-                    shiftKey: false,
-                    metaKey: false,
-                    button: 0,
-                    buttons: 1,
-                    relatedTarget: null,
-                  }) as unknown as React.MouseEvent<HTMLCanvasElement>;
-                  startDrawing(mouseEvent);
-                }}
-                onTouchMove={(e) => {
-                  const touch = e.touches[0];
-                  const mouseEvent = new MouseEvent('mousemove', {
-                    clientX: touch.clientX,
-                    clientY: touch.clientY,
-                    bubbles: true,
-                    cancelable: true,
-                    view: window,
-                    detail: 1,
-                    screenX: touch.screenX,
-                    screenY: touch.screenY,
-                    ctrlKey: false,
-                    altKey: false,
-                    shiftKey: false,
-                    metaKey: false,
-                    button: 0,
-                    buttons: 1,
-                    relatedTarget: null,
-                  }) as unknown as React.MouseEvent<HTMLCanvasElement>;
-                  draw(mouseEvent);
-                }}
-                onTouchEnd={() => stopDrawing()}
+                const touch = e.touches[0];
+                const mouseEvent = new MouseEvent("mousedown", {
+                  clientX: touch.clientX,
+                  clientY: touch.clientY,
+                });
+                startDrawing(mouseEvent);
+              }}
+              onTouchMove={(e) => {
+                const touch = e.touches[0];
+                const mouseEvent = new MouseEvent("mousemove", {
+                  clientX: touch.clientX,
+                  clientY: touch.clientY,
+                });
+                draw(mouseEvent);
+              }}
+              onTouchEnd={() => stopDrawing()}
             />
             {photos.map((photo, index) => (
               <div
@@ -610,7 +597,7 @@ export default function PhotoEditor({
 
             {selectedTemplate.defaultText?.map((textItem) => (
               <div key={textItem.id} className={textItem.style}>
-                {textItem.text}
+                {customText[textItem.id] || textItem.text}
               </div>
             ))}
           </div>

@@ -19,11 +19,14 @@ export default function CameraPreview({ onTakePicture, maxPhotos, countdownTime,
   const [photos, setPhotos] = useState<CapturedPhoto[]>([])
   const [isCapturing, setIsCapturing] = useState<boolean>(false);
   const [currentPhotoIndex, setCurrentPhotoIndex] = useState<number>(0);
+  const [facingMode, setFacingMode] = useState<'user' | 'environment'>('user');
 
   useEffect(() => {
     const startCamera = async () => {
       try {
-        const stream = await navigator.mediaDevices.getUserMedia({ video: true })
+        const stream = await navigator.mediaDevices.getUserMedia({
+          video: { facingMode }
+        })
         if (videoRef.current) {
           videoRef.current.srcObject = stream
         }
@@ -35,13 +38,55 @@ export default function CameraPreview({ onTakePicture, maxPhotos, countdownTime,
     startCamera()
 
     return () => {
-      // Cleanup: stop all tracks when component unmounts
       if (videoRef.current?.srcObject) {
         const stream = videoRef.current.srcObject as MediaStream
         stream.getTracks().forEach(track => track.stop())
       }
     }
-  }, [])
+  }, [facingMode])
+
+  const handleFlipCamera = async () => {
+    try {
+      // Create a promise that resolves when the video is ready to play
+      const waitForVideoLoad = new Promise<void>((resolve) => {
+        if (videoRef.current) {
+          const handleLoadedMetadata = () => {
+            videoRef.current?.play();
+            resolve();
+          };
+          videoRef.current.addEventListener('loadedmetadata', handleLoadedMetadata, { once: true });
+        } else {
+          resolve();
+        }
+      });
+
+      // Get new stream before stopping old one
+      const newStream = await navigator.mediaDevices.getUserMedia({
+        video: { 
+          facingMode: facingMode === 'user' ? 'environment' : 'user',
+          width: { ideal: 1920 },
+          height: { ideal: 1080 }
+        }
+      });
+      
+      // Apply the new stream
+      if (videoRef.current) {
+        videoRef.current.srcObject = newStream;
+        // Wait for the video to be ready
+        await waitForVideoLoad;
+      }
+
+      // Only after new stream is ready, stop the old one
+      if (videoRef.current?.srcObject) {
+        const oldStream = videoRef.current.srcObject as MediaStream;
+        oldStream.getTracks().forEach(track => track.stop());
+      }
+      
+      setFacingMode(prev => prev === 'user' ? 'environment' : 'user');
+    } catch (error) {
+      console.error('Error flipping camera:', error);
+    }
+  }
 
   const capturePhoto = () => {
     if (videoRef.current && canvasRef.current) {
@@ -54,8 +99,19 @@ export default function CameraPreview({ onTakePicture, maxPhotos, countdownTime,
         canvas.width = video.videoWidth
         canvas.height = video.videoHeight
         
+        if (facingMode === 'user') {
+          // Mirror the image horizontally for front-facing camera
+          context.translate(canvas.width, 0)
+          context.scale(-1, 1)
+        }
+        
         // Draw the current frame from video to canvas
         context.drawImage(video, 0, 0, canvas.width, canvas.height)
+        
+        if (facingMode === 'user') {
+          // Reset transformation matrix to not affect future operations
+          context.setTransform(1, 0, 0, 1, 0, 0)
+        }
         
         // Convert canvas to data URL
         const dataUrl = canvas.toDataURL('image/jpeg')
@@ -132,7 +188,7 @@ export default function CameraPreview({ onTakePicture, maxPhotos, countdownTime,
               ref={videoRef}
               autoPlay
               playsInline
-              className="w-full h-full object-cover"
+              className={`w-full h-full object-cover ${facingMode === 'user' ? 'scale-x-[-1]' : ''}`}
             />
             {countdown !== null && (
               <div className="absolute inset-0 flex items-center justify-center bg-black/10 backdrop-blur-[1px]">
@@ -142,6 +198,16 @@ export default function CameraPreview({ onTakePicture, maxPhotos, countdownTime,
           </div>
 
           <div className="mt-8 flex justify-center gap-4">
+            <button
+              onClick={handleFlipCamera}
+              className="px-6 py-3 bg-gray-100 text-gray-900
+                hover:bg-gray-200 transition-all duration-300
+                text-base font-light tracking-wide
+                disabled:opacity-50 disabled:cursor-not-allowed"
+              disabled={isCapturing}
+            >
+              Flip Camera
+            </button>
             {photos.length >= maxPhotos ? (
               <div className="flex gap-4">
                 <button
