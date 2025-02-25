@@ -316,6 +316,7 @@ export default function PhotoEditor({ photos, onReset }: PhotoEditorProps) {
     const y = (e.clientY - rect.top) * scaleY;
     contextRef.current.lineTo(x, y);
     contextRef.current.stroke();
+    saveDrawingState();
   };
 
   const saveDrawingState = () => {
