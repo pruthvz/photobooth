@@ -12,6 +12,8 @@ interface CameraPreviewProps {
   setShowEditor: (show: boolean) => void
 }
 
+type FilterType = 'No Filter' | 'Grayscale' | 'Sepia' | 'Vintage' | 'Soft';
+
 export default function CameraPreview({ onTakePicture, maxPhotos, countdownTime, setShowEditor }: CameraPreviewProps) {
   const videoRef = useRef<HTMLVideoElement>(null)
   const canvasRef = useRef<HTMLCanvasElement>(null)
@@ -20,6 +22,54 @@ export default function CameraPreview({ onTakePicture, maxPhotos, countdownTime,
   const [isCapturing, setIsCapturing] = useState<boolean>(false);
   const [currentPhotoIndex, setCurrentPhotoIndex] = useState<number>(0);
   const [facingMode, setFacingMode] = useState<'user' | 'environment'>('user');
+  const [selectedFilter, setSelectedFilter] = useState<FilterType>('No Filter');
+
+  // Filter styles mapping
+  const filterStyles = {
+    'No Filter': '',
+    'Grayscale': 'grayscale(1)',
+    'Sepia': 'sepia(1)',
+    'Vintage': 'sepia(0.5) contrast(1.1) brightness(0.9)',
+    'Soft': 'brightness(1.1) contrast(0.9) saturate(0.9)'
+  };
+
+  // Apply filter to canvas context
+  const applyFilter = (context: CanvasRenderingContext2D) => {
+    if (selectedFilter === 'No Filter') return;
+
+    const imageData = context.getImageData(0, 0, context.canvas.width, context.canvas.height);
+    const data = imageData.data;
+
+    for (let i = 0; i < data.length; i += 4) {
+      const r = data[i];
+      const g = data[i + 1];
+      const b = data[i + 2];
+
+      switch (selectedFilter) {
+        case 'Grayscale':
+          const gray = 0.299 * r + 0.587 * g + 0.114 * b;
+          data[i] = data[i + 1] = data[i + 2] = gray;
+          break;
+        case 'Sepia':
+          data[i] = r * 0.393 + g * 0.769 + b * 0.189;
+          data[i + 1] = r * 0.349 + g * 0.686 + b * 0.168;
+          data[i + 2] = r * 0.272 + g * 0.534 + b * 0.131;
+          break;
+        case 'Vintage':
+          data[i] = r * 0.5 + g * 0.5 + b * 0.1;
+          data[i + 1] = r * 0.2 + g * 0.7 + b * 0.1;
+          data[i + 2] = r * 0.1 + g * 0.3 + b * 0.6;
+          break;
+        case 'Soft':
+          data[i] = r * 1.1;
+          data[i + 1] = g * 1.1;
+          data[i + 2] = b * 0.9;
+          break;
+      }
+    }
+
+    context.putImageData(imageData, 0, 0);
+  };
 
   useEffect(() => {
     const startCamera = async () => {
@@ -95,34 +145,30 @@ export default function CameraPreview({ onTakePicture, maxPhotos, countdownTime,
       const context = canvas.getContext('2d')
       
       if (context) {
-        // Set canvas dimensions to match video
         canvas.width = video.videoWidth
         canvas.height = video.videoHeight
         
         if (facingMode === 'user') {
-          // Mirror the image horizontally for front-facing camera
           context.translate(canvas.width, 0)
           context.scale(-1, 1)
         }
         
-        // Draw the current frame from video to canvas
         context.drawImage(video, 0, 0, canvas.width, canvas.height)
         
         if (facingMode === 'user') {
-          // Reset transformation matrix to not affect future operations
           context.setTransform(1, 0, 0, 1, 0, 0)
         }
+
+        // Apply selected filter
+        applyFilter(context);
         
-        // Convert canvas to data URL
         const dataUrl = canvas.toDataURL('image/jpeg')
         
-        // Create new photo object
         const newPhoto: CapturedPhoto = {
           id: Date.now().toString(),
           dataUrl
         }
         
-        // Update photos state and notify parent
         const updatedPhotos = [...photos, newPhoto]
         setPhotos(updatedPhotos)
         onTakePicture(updatedPhotos)
@@ -183,12 +229,28 @@ export default function CameraPreview({ onTakePicture, maxPhotos, countdownTime,
       <div className="w-full max-w-6xl mx-auto flex gap-8 relative z-10">
         {/* Camera Preview */}
         <div className="flex-1">
+          <div className="text-center mb-4">
+            <h3 className="text-gray-600 font-medium mb-3 text-sm uppercase tracking-wide">Choose a filter before starting capture!</h3>
+            <div className="flex justify-center gap-2">
+              {Object.keys(filterStyles).map((filter) => (
+                <button
+                  key={filter}
+                  onClick={() => setSelectedFilter(filter as FilterType)}
+                  className={`px-4 py-2 rounded-full text-sm transition-all ${selectedFilter === filter ? 'bg-gray-200 text-gray-900' : 'bg-gray-100 text-gray-600 hover:bg-gray-150'}`}
+                  disabled={isCapturing}
+                >
+                  {filter}
+                </button>
+              ))}
+            </div>
+          </div>
           <div className="relative w-full aspect-video bg-white overflow-hidden">
             <video
               ref={videoRef}
               autoPlay
               playsInline
               className={`w-full h-full object-cover ${facingMode === 'user' ? 'scale-x-[-1]' : ''}`}
+              style={{ filter: filterStyles[selectedFilter] }}
             />
             {countdown !== null && (
               <div className="absolute inset-0 flex items-center justify-center bg-black/10 backdrop-blur-[1px]">
